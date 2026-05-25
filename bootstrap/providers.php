@@ -1,7 +1,29 @@
 <?php
 
-use App\Providers\AppServiceProvider;
-
 return [
-    AppServiceProvider::class,
+    App\Providers\AppServiceProvider::class,
+    App\Providers\Filament\AdminPanelProvider::class,
+    Modules\User\Providers\UserServiceProvider::class,
+    Modules\Student\Providers\StudentServiceProvider::class,
+    Modules\Teacher\Providers\TeacherServiceProvider::class,
+    Modules\EducationalStage\Providers\EducationalStageServiceProvider::class,
+    Modules\EducationalSubStage\Providers\EducationalSubStageServiceProvider::class,
+    Modules\CourseType\Providers\CourseTypeServiceProvider::class,
+    Modules\Subject\Providers\SubjectServiceProvider::class,
+    Modules\SubjectCategory\Providers\SubjectCategoryServiceProvider::class,
+    Modules\Unit\Providers\UnitServiceProvider::class,
+    Modules\Lesson\Providers\LessonServiceProvider::class,
+    Modules\VideoFile\Providers\VideoFileServiceProvider::class,
+    Modules\LessonAttachment\Providers\LessonAttachmentServiceProvider::class,
+    Modules\Subscription\Providers\SubscriptionServiceProvider::class,
+    Modules\QuestionBank\Providers\QuestionBankServiceProvider::class,
+    Modules\Question\Providers\QuestionServiceProvider::class,
+    Modules\QuestionOption\Providers\QuestionOptionServiceProvider::class,
+    Modules\Exam\Providers\ExamServiceProvider::class,
+    Modules\ExamAttempt\Providers\ExamAttemptServiceProvider::class,
+    Modules\LibraryItem\Providers\LibraryItemServiceProvider::class,
+    Modules\ConversationChannel\Providers\ConversationChannelServiceProvider::class,
+    Modules\Message\Providers\MessageServiceProvider::class,
+    Modules\MessageAttachment\Providers\MessageAttachmentServiceProvider::class,
+    Modules\StaticPage\Providers\StaticPageServiceProvider::class,
 ];
