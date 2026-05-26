@@ -1,84 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\Subscription\Filament\Panel;
 
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\Subscription\Models\Subscription;
+use Modules\Subscription\Filament\Panel\Pages\ListSubscriptions;
+use Modules\Subscription\Filament\Panel\Pages\CreateSubscription;
+use Modules\Subscription\Filament\Panel\Pages\ViewSubscription;
+use Modules\Subscription\Filament\Panel\Pages\EditSubscription;
+use Modules\Subscription\Filament\Panel\Schemas\SubscriptionForm;
+use Modules\Subscription\Filament\Panel\Schemas\SubscriptionInfolist;
+use Modules\Subscription\Filament\Panel\Tables\SubscriptionsTable;
 
-final class SubscriptionResource extends Resource
+class SubscriptionResource extends Resource
 {
     protected static ?string $model = Subscription::class;
 
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $recordTitleAttribute = 'id';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-credit-card';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.subscription');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.subscriptions');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.subscription');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.subscriptions');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('student_id')
-                    ->relationship('student', 'id')
-                    ->required(),
-                Select::make('subscribable_type')
-                    ->options([
-                        'Modules\EducationalStage\Models\EducationalStage' => 'Educational Stage',
-                        'Modules\EducationalSubStage\Models\EducationalSubStage' => 'Educational Sub Stage',
-                        'Modules\Subject\Models\Subject' => 'Subject',
-                        'Modules\SubjectCategory\Models\SubjectCategory' => 'Subject Category',
-                    ])
-                    ->required(),
-                TextInput::make('subscribable_id')
-                    ->numeric()
-                    ->required(),
-                Select::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'active' => 'Active',
-                        'expired' => 'Expired',
-                        'cancelled' => 'Cancelled',
-                    ])
-                    ->default('pending')
-                    ->required(),
-                DateTimePicker::make('activated_at'),
-                DateTimePicker::make('expires_at'),
-                Select::make('activated_by')
-                    ->relationship('activatedBy', 'name'),
-                RichEditor::make('notes'),
-            ]);
+        return SubscriptionForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return SubscriptionInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('student.id')
-                    ->label('Student ID'),
-                TextColumn::make('subscribable_type'),
-                TextColumn::make('subscribable_id'),
-                TextColumn::make('status'),
-                TextColumn::make('activated_at')
-                    ->dateTime(),
-                TextColumn::make('expires_at')
-                    ->dateTime(),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return SubscriptionsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -86,34 +84,8 @@ final class SubscriptionResource extends Resource
         return [
             'index' => ListSubscriptions::route('/'),
             'create' => CreateSubscription::route('/create'),
+            'view' => ViewSubscription::route('/{record}'),
             'edit' => EditSubscription::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListSubscriptions extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = SubscriptionResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateSubscription extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = SubscriptionResource::class;
-}
-
-final class EditSubscription extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = SubscriptionResource::class;
 }

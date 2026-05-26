@@ -1,57 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\Teacher\Filament\Panel;
 
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Resources\Pages\CreateRecord;
-use Filament\Resources\Pages\EditRecord;
-use Filament\Resources\Pages\ListRecords;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\Teacher\Models\Teacher;
+use Modules\Teacher\Filament\Panel\Pages\ListTeachers;
+use Modules\Teacher\Filament\Panel\Pages\CreateTeacher;
+use Modules\Teacher\Filament\Panel\Pages\ViewTeacher;
+use Modules\Teacher\Filament\Panel\Pages\EditTeacher;
+use Modules\Teacher\Filament\Panel\Schemas\TeacherForm;
+use Modules\Teacher\Filament\Panel\Schemas\TeacherInfolist;
+use Modules\Teacher\Filament\Panel\Tables\TeachersTable;
 
 class TeacherResource extends Resource
 {
     protected static ?string $model = Teacher::class;
 
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $recordTitleAttribute = 'specialization';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-presentation-chart-bar';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.people');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.teachers');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.teacher');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.teachers');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('user_id')
-                    ->relationship('user', 'name')
-                    ->required(),
-                RichEditor::make('bio'),
-                TextInput::make('profile_photo_path')
-                    ->maxLength(255),
-                TextInput::make('specialization')
-                    ->maxLength(255),
-            ]);
+        return TeacherForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return TeacherInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('user.name')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('specialization')
-                    ->searchable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable(),
-            ])
-            ->filters([])
-            ->actions([])
-            ->bulkActions([]);
+        return TeachersTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -59,27 +84,8 @@ class TeacherResource extends Resource
         return [
             'index' => ListTeachers::route('/'),
             'create' => CreateTeacher::route('/create'),
+            'view' => ViewTeacher::route('/{record}'),
             'edit' => EditTeacher::route('/{record}/edit'),
         ];
     }
-
-    public static function getNavigationLabel(): string
-    {
-        return 'Teachers';
-    }
-}
-
-class ListTeachers extends ListRecords
-{
-    protected static string $resource = TeacherResource::class;
-}
-
-class CreateTeacher extends CreateRecord
-{
-    protected static string $resource = TeacherResource::class;
-}
-
-class EditTeacher extends EditRecord
-{
-    protected static string $resource = TeacherResource::class;
 }

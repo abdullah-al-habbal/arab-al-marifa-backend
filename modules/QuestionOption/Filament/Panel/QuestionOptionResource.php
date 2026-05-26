@@ -1,65 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\QuestionOption\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\QuestionOption\Models\QuestionOption;
+use Modules\QuestionOption\Filament\Panel\Pages\ListQuestionOptions;
+use Modules\QuestionOption\Filament\Panel\Pages\CreateQuestionOption;
+use Modules\QuestionOption\Filament\Panel\Pages\ViewQuestionOption;
+use Modules\QuestionOption\Filament\Panel\Pages\EditQuestionOption;
+use Modules\QuestionOption\Filament\Panel\Schemas\QuestionOptionForm;
+use Modules\QuestionOption\Filament\Panel\Schemas\QuestionOptionInfolist;
+use Modules\QuestionOption\Filament\Panel\Tables\QuestionOptionsTable;
 
-final class QuestionOptionResource extends Resource
+class QuestionOptionResource extends Resource
 {
     protected static ?string $model = QuestionOption::class;
 
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $recordTitleAttribute = 'body';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-list-bullet';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.assessment');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.question_options');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.question_option');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.question_options');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('question_id')
-                    ->relationship('question', 'body')
-                    ->required(),
-                TextInput::make('body')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('sort_order')
-                    ->integer()
-                    ->default(0),
-                Toggle::make('is_correct')
-                    ->default(false),
-            ]);
+        return QuestionOptionForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return QuestionOptionInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('question.body')
-                    ->limit(50),
-                TextColumn::make('body')
-                    ->limit(50),
-                TextColumn::make('sort_order'),
-                IconColumn::make('is_correct')
-                    ->boolean(),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return QuestionOptionsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -67,34 +84,8 @@ final class QuestionOptionResource extends Resource
         return [
             'index' => ListQuestionOptions::route('/'),
             'create' => CreateQuestionOption::route('/create'),
+            'view' => ViewQuestionOption::route('/{record}'),
             'edit' => EditQuestionOption::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListQuestionOptions extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = QuestionOptionResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateQuestionOption extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = QuestionOptionResource::class;
-}
-
-final class EditQuestionOption extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = QuestionOptionResource::class;
 }

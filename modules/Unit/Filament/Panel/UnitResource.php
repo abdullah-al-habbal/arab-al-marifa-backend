@@ -1,59 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\Unit\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\Unit\Models\Unit;
+use Modules\Unit\Filament\Panel\Pages\ListUnits;
+use Modules\Unit\Filament\Panel\Pages\CreateUnit;
+use Modules\Unit\Filament\Panel\Pages\ViewUnit;
+use Modules\Unit\Filament\Panel\Pages\EditUnit;
+use Modules\Unit\Filament\Panel\Schemas\UnitForm;
+use Modules\Unit\Filament\Panel\Schemas\UnitInfolist;
+use Modules\Unit\Filament\Panel\Tables\UnitsTable;
 
-final class UnitResource extends Resource
+class UnitResource extends Resource
 {
     protected static ?string $model = Unit::class;
 
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-cube';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.catalog');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.units');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.unit');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.units');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Select::make('subject_id')
-                    ->relationship('subject', 'name')
-                    ->nullable(),
-                TextInput::make('sort_order')
-                    ->integer()
-                    ->default(0),
-            ]);
+        return UnitForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return UnitInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('subject.name')
-                    ->label('Subject'),
-                TextColumn::make('sort_order'),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return UnitsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -61,34 +84,8 @@ final class UnitResource extends Resource
         return [
             'index' => ListUnits::route('/'),
             'create' => CreateUnit::route('/create'),
+            'view' => ViewUnit::route('/{record}'),
             'edit' => EditUnit::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListUnits extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = UnitResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateUnit extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = UnitResource::class;
-}
-
-final class EditUnit extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = UnitResource::class;
 }

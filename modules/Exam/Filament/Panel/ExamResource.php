@@ -1,67 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\Exam\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\Exam\Models\Exam;
+use Modules\Exam\Filament\Panel\Pages\ListExams;
+use Modules\Exam\Filament\Panel\Pages\CreateExam;
+use Modules\Exam\Filament\Panel\Pages\ViewExam;
+use Modules\Exam\Filament\Panel\Pages\EditExam;
+use Modules\Exam\Filament\Panel\Schemas\ExamForm;
+use Modules\Exam\Filament\Panel\Schemas\ExamInfolist;
+use Modules\Exam\Filament\Panel\Tables\ExamsTable;
 
-final class ExamResource extends Resource
+class ExamResource extends Resource
 {
     protected static ?string $model = Exam::class;
 
+    protected static ?int $navigationSort = 4;
+
+    protected static ?string $recordTitleAttribute = 'title';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-document-text';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.assessment');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.exams');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.exam');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.exams');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                TextInput::make('title')
-                    ->required()
-                    ->maxLength(255),
-                Select::make('subject_id')
-                    ->relationship('subject', 'name')
-                    ->required(),
-                TextInput::make('question_count')
-                    ->numeric()
-                    ->required(),
-                TextInput::make('passing_score_percent')
-                    ->numeric()
-                    ->default(70),
-                TextInput::make('time_limit_minutes')
-                    ->numeric(),
-                Select::make('created_by')
-                    ->relationship('createdBy', 'name'),
-            ]);
+        return ExamForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return ExamInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('title')
-                    ->searchable(),
-                TextColumn::make('subject.name'),
-                TextColumn::make('question_count'),
-                TextColumn::make('passing_score_percent'),
-                TextColumn::make('time_limit_minutes'),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return ExamsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -69,34 +84,8 @@ final class ExamResource extends Resource
         return [
             'index' => ListExams::route('/'),
             'create' => CreateExam::route('/create'),
+            'view' => ViewExam::route('/{record}'),
             'edit' => EditExam::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListExams extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = ExamResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateExam extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = ExamResource::class;
-}
-
-final class EditExam extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = ExamResource::class;
 }

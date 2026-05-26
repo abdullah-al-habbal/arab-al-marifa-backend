@@ -1,79 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\Message\Filament\Panel;
 
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\Message\Models\Message;
+use Modules\Message\Filament\Panel\Pages\ListMessages;
+use Modules\Message\Filament\Panel\Pages\CreateMessage;
+use Modules\Message\Filament\Panel\Pages\ViewMessage;
+use Modules\Message\Filament\Panel\Pages\EditMessage;
+use Modules\Message\Filament\Panel\Schemas\MessageForm;
+use Modules\Message\Filament\Panel\Schemas\MessageInfolist;
+use Modules\Message\Filament\Panel\Tables\MessagesTable;
 
-final class MessageResource extends Resource
+class MessageResource extends Resource
 {
     protected static ?string $model = Message::class;
 
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $recordTitleAttribute = 'body';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-envelope';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.communication');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.messages');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.message');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.messages');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('channel_id')
-                    ->relationship('channel', 'id')
-                    ->required(),
-                Select::make('sender_id')
-                    ->relationship('sender', 'name')
-                    ->required(),
-                Select::make('sender_type')
-                    ->options([
-                        'student' => 'Student',
-                        'teacher' => 'Teacher',
-                    ])
-                    ->required(),
-                Select::make('message_type')
-                    ->options([
-                        'text' => 'Text',
-                        'voice' => 'Voice',
-                        'image' => 'Image',
-                        'video' => 'Video',
-                    ])
-                    ->required(),
-                RichEditor::make('body'),
-                TextInput::make('attachment_path')
-                    ->maxLength(255),
-                DateTimePicker::make('sent_at')
-                    ->required(),
-                DateTimePicker::make('read_at'),
-            ]);
+        return MessageForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return MessageInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('channel_id'),
-                TextColumn::make('sender.name')
-                    ->label('Sender'),
-                TextColumn::make('message_type'),
-                TextColumn::make('sent_at')
-                    ->dateTime(),
-                TextColumn::make('read_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return MessagesTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -81,34 +84,8 @@ final class MessageResource extends Resource
         return [
             'index' => ListMessages::route('/'),
             'create' => CreateMessage::route('/create'),
+            'view' => ViewMessage::route('/{record}'),
             'edit' => EditMessage::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListMessages extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = MessageResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateMessage extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = MessageResource::class;
-}
-
-final class EditMessage extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = MessageResource::class;
 }

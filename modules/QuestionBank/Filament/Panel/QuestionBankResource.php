@@ -1,81 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\QuestionBank\Filament\Panel;
 
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\QuestionBank\Models\QuestionBank;
+use Modules\QuestionBank\Filament\Panel\Pages\ListQuestionBanks;
+use Modules\QuestionBank\Filament\Panel\Pages\CreateQuestionBank;
+use Modules\QuestionBank\Filament\Panel\Pages\ViewQuestionBank;
+use Modules\QuestionBank\Filament\Panel\Pages\EditQuestionBank;
+use Modules\QuestionBank\Filament\Panel\Schemas\QuestionBankForm;
+use Modules\QuestionBank\Filament\Panel\Schemas\QuestionBankInfolist;
+use Modules\QuestionBank\Filament\Panel\Tables\QuestionBanksTable;
 
-final class QuestionBankResource extends Resource
+class QuestionBankResource extends Resource
 {
     protected static ?string $model = QuestionBank::class;
 
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $recordTitleAttribute = 'stem';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-question-mark-circle';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.assessment');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.question_banks');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.question_bank');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.question_banks');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('subject_id')
-                    ->relationship('subject', 'name')
-                    ->required(),
-                Select::make('lesson_id')
-                    ->relationship('lesson', 'title'),
-                TextInput::make('unit_tag')
-                    ->maxLength(255),
-                RichEditor::make('stem')
-                    ->required(),
-                Select::make('question_type')
-                    ->options([
-                        'single_choice' => 'Single Choice',
-                    ])
-                    ->default('single_choice'),
-                Select::make('difficulty')
-                    ->options([
-                        'easy' => 'Easy',
-                        'medium' => 'Medium',
-                        'hard' => 'Hard',
-                    ])
-                    ->default('medium'),
-                Select::make('created_by')
-                    ->relationship('createdBy', 'name'),
-                Toggle::make('is_active')
-                    ->default(true),
-            ]);
+        return QuestionBankForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return QuestionBankInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('subject.name'),
-                TextColumn::make('lesson.title'),
-                TextColumn::make('unit_tag'),
-                TextColumn::make('stem')
-                    ->limit(50),
-                TextColumn::make('question_type'),
-                TextColumn::make('difficulty'),
-                ToggleColumn::make('is_active'),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return QuestionBanksTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -83,34 +84,8 @@ final class QuestionBankResource extends Resource
         return [
             'index' => ListQuestionBanks::route('/'),
             'create' => CreateQuestionBank::route('/create'),
+            'view' => ViewQuestionBank::route('/{record}'),
             'edit' => EditQuestionBank::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListQuestionBanks extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = QuestionBankResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateQuestionBank extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = QuestionBankResource::class;
-}
-
-final class EditQuestionBank extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = QuestionBankResource::class;
 }

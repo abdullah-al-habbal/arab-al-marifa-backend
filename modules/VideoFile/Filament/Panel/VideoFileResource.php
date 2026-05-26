@@ -1,75 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\VideoFile\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\VideoFile\Models\VideoFile;
+use Modules\VideoFile\Filament\Panel\Pages\ListVideoFiles;
+use Modules\VideoFile\Filament\Panel\Pages\CreateVideoFile;
+use Modules\VideoFile\Filament\Panel\Pages\ViewVideoFile;
+use Modules\VideoFile\Filament\Panel\Pages\EditVideoFile;
+use Modules\VideoFile\Filament\Panel\Schemas\VideoFileForm;
+use Modules\VideoFile\Filament\Panel\Schemas\VideoFileInfolist;
+use Modules\VideoFile\Filament\Panel\Tables\VideoFilesTable;
 
-final class VideoFileResource extends Resource
+class VideoFileResource extends Resource
 {
     protected static ?string $model = VideoFile::class;
 
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $recordTitleAttribute = 'quality';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-video-camera';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.content');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.video_files');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.video_file');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.video_files');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('lesson_id')
-                    ->relationship('lesson', 'title')
-                    ->required(),
-                Select::make('quality')
-                    ->options([
-                        'low' => 'Low',
-                        'medium' => 'Medium',
-                        'high' => 'High',
-                    ])
-                    ->required(),
-                TextInput::make('storage_path')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('mime_type')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('file_size_bytes')
-                    ->numeric()
-                    ->required(),
-                TextInput::make('duration_seconds')
-                    ->numeric()
-                    ->required(),
-            ]);
+        return VideoFileForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return VideoFileInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('lesson.title')
-                    ->label('Lesson'),
-                TextColumn::make('quality'),
-                TextColumn::make('mime_type'),
-                TextColumn::make('file_size_bytes')
-                    ->formatStateUsing(fn ($state) => number_format($state / 1024, 2) . ' KB'),
-                TextColumn::make('duration_seconds')
-                    ->formatStateUsing(fn ($state) => gmdate('H:i:s', $state)),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return VideoFilesTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -77,34 +84,8 @@ final class VideoFileResource extends Resource
         return [
             'index' => ListVideoFiles::route('/'),
             'create' => CreateVideoFile::route('/create'),
+            'view' => ViewVideoFile::route('/{record}'),
             'edit' => EditVideoFile::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListVideoFiles extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = VideoFileResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateVideoFile extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = VideoFileResource::class;
-}
-
-final class EditVideoFile extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = VideoFileResource::class;
 }

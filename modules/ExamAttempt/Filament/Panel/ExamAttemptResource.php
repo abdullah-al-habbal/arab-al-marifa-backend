@@ -1,74 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\ExamAttempt\Filament\Panel;
 
-use Filament\Forms\Components\DateTimePicker;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\ExamAttempt\Models\ExamAttempt;
+use Modules\ExamAttempt\Filament\Panel\Pages\ListExamAttempts;
+use Modules\ExamAttempt\Filament\Panel\Pages\CreateExamAttempt;
+use Modules\ExamAttempt\Filament\Panel\Pages\ViewExamAttempt;
+use Modules\ExamAttempt\Filament\Panel\Pages\EditExamAttempt;
+use Modules\ExamAttempt\Filament\Panel\Schemas\ExamAttemptForm;
+use Modules\ExamAttempt\Filament\Panel\Schemas\ExamAttemptInfolist;
+use Modules\ExamAttempt\Filament\Panel\Tables\ExamAttemptsTable;
 
-final class ExamAttemptResource extends Resource
+class ExamAttemptResource extends Resource
 {
     protected static ?string $model = ExamAttempt::class;
 
+    protected static ?int $navigationSort = 5;
+
+    protected static ?string $recordTitleAttribute = 'id';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-clipboard-document-list';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.assessment');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.exam_attempts');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.exam_attempt');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.exam_attempts');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('exam_id')
-                    ->relationship('exam', 'title')
-                    ->required(),
-                Select::make('student_id')
-                    ->relationship('student', 'id')
-                    ->required(),
-                DateTimePicker::make('started_at'),
-                DateTimePicker::make('submitted_at'),
-                TextInput::make('score_percent')
-                    ->numeric(),
-                Select::make('status')
-                    ->options([
-                        'in_progress' => 'In Progress',
-                        'passed' => 'Passed',
-                        'failed' => 'Failed',
-                        'timed_out' => 'Timed Out',
-                    ])
-                    ->default('in_progress')
-                    ->required(),
-            ]);
+        return ExamAttemptForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return ExamAttemptInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('exam.title'),
-                TextColumn::make('student.id')
-                    ->label('Student ID'),
-                TextColumn::make('started_at')
-                    ->dateTime(),
-                TextColumn::make('submitted_at')
-                    ->dateTime(),
-                TextColumn::make('score_percent'),
-                TextColumn::make('status'),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return ExamAttemptsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -76,34 +84,8 @@ final class ExamAttemptResource extends Resource
         return [
             'index' => ListExamAttempts::route('/'),
             'create' => CreateExamAttempt::route('/create'),
+            'view' => ViewExamAttempt::route('/{record}'),
             'edit' => EditExamAttempt::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListExamAttempts extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = ExamAttemptResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateExamAttempt extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = ExamAttemptResource::class;
-}
-
-final class EditExamAttempt extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = ExamAttemptResource::class;
 }

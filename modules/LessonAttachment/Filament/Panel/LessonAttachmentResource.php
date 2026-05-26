@@ -1,64 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\LessonAttachment\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\LessonAttachment\Models\LessonAttachment;
+use Modules\LessonAttachment\Filament\Panel\Pages\ListLessonAttachments;
+use Modules\LessonAttachment\Filament\Panel\Pages\CreateLessonAttachment;
+use Modules\LessonAttachment\Filament\Panel\Pages\ViewLessonAttachment;
+use Modules\LessonAttachment\Filament\Panel\Pages\EditLessonAttachment;
+use Modules\LessonAttachment\Filament\Panel\Schemas\LessonAttachmentForm;
+use Modules\LessonAttachment\Filament\Panel\Schemas\LessonAttachmentInfolist;
+use Modules\LessonAttachment\Filament\Panel\Tables\LessonAttachmentsTable;
 
-final class LessonAttachmentResource extends Resource
+class LessonAttachmentResource extends Resource
 {
     protected static ?string $model = LessonAttachment::class;
 
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $recordTitleAttribute = 'original_filename';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-paper-clip';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.content');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.lesson_attachments');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.lesson_attachment');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.lesson_attachments');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('lesson_id')
-                    ->relationship('lesson', 'title')
-                    ->required(),
-                TextInput::make('storage_path')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('original_filename')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('file_size_bytes')
-                    ->numeric()
-                    ->required(),
-            ]);
+        return LessonAttachmentForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return LessonAttachmentInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('lesson.title')
-                    ->label('Lesson'),
-                TextColumn::make('original_filename')
-                    ->searchable(),
-                TextColumn::make('storage_path'),
-                TextColumn::make('file_size_bytes')
-                    ->formatStateUsing(fn ($state) => number_format($state / 1024, 2) . ' KB'),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return LessonAttachmentsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -66,34 +84,8 @@ final class LessonAttachmentResource extends Resource
         return [
             'index' => ListLessonAttachments::route('/'),
             'create' => CreateLessonAttachment::route('/create'),
+            'view' => ViewLessonAttachment::route('/{record}'),
             'edit' => EditLessonAttachment::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListLessonAttachments extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = LessonAttachmentResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateLessonAttachment extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = LessonAttachmentResource::class;
-}
-
-final class EditLessonAttachment extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = LessonAttachmentResource::class;
 }

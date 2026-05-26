@@ -4,64 +4,80 @@ declare(strict_types=1);
 
 namespace Modules\EducationalSubStage\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Resources\Pages\CreateRecord;
-use Filament\Resources\Pages\EditRecord;
-use Filament\Resources\Pages\ListRecords;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\EducationalSubStage\Models\EducationalSubStage;
+use Modules\EducationalSubStage\Filament\Panel\Pages\ListEducationalSubStages;
+use Modules\EducationalSubStage\Filament\Panel\Pages\CreateEducationalSubStage;
+use Modules\EducationalSubStage\Filament\Panel\Pages\ViewEducationalSubStage;
+use Modules\EducationalSubStage\Filament\Panel\Pages\EditEducationalSubStage;
+use Modules\EducationalSubStage\Filament\Panel\Schemas\EducationalSubStageForm;
+use Modules\EducationalSubStage\Filament\Panel\Schemas\EducationalSubStageInfolist;
+use Modules\EducationalSubStage\Filament\Panel\Tables\EducationalSubStagesTable;
 
 class EducationalSubStageResource extends Resource
 {
     protected static ?string $model = EducationalSubStage::class;
 
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-adjustments-vertical';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.hierarchy');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.educational_sub_stages');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.educational_sub_stage');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.educational_sub_stages');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('stage_id')
-                    ->relationship('stage', 'name')
-                    ->required(),
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('sort_order')
-                    ->numeric()
-                    ->default(0),
-                Toggle::make('is_active')
-                    ->default(true),
-            ]);
+        return EducationalSubStageForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return EducationalSubStageInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('stage.name')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('sort_order')
-                    ->sortable(),
-                IconColumn::make('is_active')
-                    ->boolean()
-                    ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable(),
-            ])
-            ->filters([])
-            ->actions([])
-            ->bulkActions([]);
+        return EducationalSubStagesTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -69,27 +85,8 @@ class EducationalSubStageResource extends Resource
         return [
             'index' => ListEducationalSubStages::route('/'),
             'create' => CreateEducationalSubStage::route('/create'),
+            'view' => ViewEducationalSubStage::route('/{record}'),
             'edit' => EditEducationalSubStage::route('/{record}/edit'),
         ];
     }
-
-    public static function getNavigationLabel(): string
-    {
-        return 'Educational Sub Stages';
-    }
-}
-
-class ListEducationalSubStages extends ListRecords
-{
-    protected static string $resource = EducationalSubStageResource::class;
-}
-
-class CreateEducationalSubStage extends CreateRecord
-{
-    protected static string $resource = EducationalSubStageResource::class;
-}
-
-class EditEducationalSubStage extends EditRecord
-{
-    protected static string $resource = EducationalSubStageResource::class;
 }

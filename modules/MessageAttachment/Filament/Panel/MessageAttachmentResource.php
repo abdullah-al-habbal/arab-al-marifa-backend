@@ -1,62 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\MessageAttachment\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\MessageAttachment\Models\MessageAttachment;
+use Modules\MessageAttachment\Filament\Panel\Pages\ListMessageAttachments;
+use Modules\MessageAttachment\Filament\Panel\Pages\CreateMessageAttachment;
+use Modules\MessageAttachment\Filament\Panel\Pages\ViewMessageAttachment;
+use Modules\MessageAttachment\Filament\Panel\Pages\EditMessageAttachment;
+use Modules\MessageAttachment\Filament\Panel\Schemas\MessageAttachmentForm;
+use Modules\MessageAttachment\Filament\Panel\Schemas\MessageAttachmentInfolist;
+use Modules\MessageAttachment\Filament\Panel\Tables\MessageAttachmentsTable;
 
-final class MessageAttachmentResource extends Resource
+class MessageAttachmentResource extends Resource
 {
     protected static ?string $model = MessageAttachment::class;
 
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $recordTitleAttribute = 'id';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-paper-clip';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.communication');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.message_attachments');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.message_attachment');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.message_attachments');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('message_id')
-                    ->relationship('message', 'id')
-                    ->required(),
-                TextInput::make('attachment_path')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('mime_type')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('file_size_bytes')
-                    ->integer()
-                    ->nullable(),
-            ]);
+        return MessageAttachmentForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return MessageAttachmentInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('message_id'),
-                TextColumn::make('attachment_path')
-                    ->limit(50),
-                TextColumn::make('mime_type'),
-                TextColumn::make('file_size_bytes'),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return MessageAttachmentsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -64,34 +84,8 @@ final class MessageAttachmentResource extends Resource
         return [
             'index' => ListMessageAttachments::route('/'),
             'create' => CreateMessageAttachment::route('/create'),
+            'view' => ViewMessageAttachment::route('/{record}'),
             'edit' => EditMessageAttachment::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListMessageAttachments extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = MessageAttachmentResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateMessageAttachment extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = MessageAttachmentResource::class;
-}
-
-final class EditMessageAttachment extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = MessageAttachmentResource::class;
 }

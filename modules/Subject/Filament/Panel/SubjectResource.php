@@ -1,68 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\Subject\Filament\Panel;
 
-use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\Subject\Models\Subject;
+use Modules\Subject\Filament\Panel\Pages\ListSubjects;
+use Modules\Subject\Filament\Panel\Pages\CreateSubject;
+use Modules\Subject\Filament\Panel\Pages\ViewSubject;
+use Modules\Subject\Filament\Panel\Pages\EditSubject;
+use Modules\Subject\Filament\Panel\Schemas\SubjectForm;
+use Modules\Subject\Filament\Panel\Schemas\SubjectInfolist;
+use Modules\Subject\Filament\Panel\Tables\SubjectsTable;
 
-final class SubjectResource extends Resource
+class SubjectResource extends Resource
 {
     protected static ?string $model = Subject::class;
 
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-book-open';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.catalog');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.subjects');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.subject');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.subjects');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('course_type_id')
-                    ->relationship('courseType', 'name')
-                    ->required(),
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                RichEditor::make('description'),
-                TextInput::make('cover_image_path')
-                    ->maxLength(255),
-                TextInput::make('sort_order')
-                    ->integer()
-                    ->default(0),
-                Toggle::make('is_active')
-                    ->default(true),
-            ]);
+        return SubjectForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return SubjectInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('courseType.name')
-                    ->label('Course Type'),
-                TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('sort_order'),
-                ToggleColumn::make('is_active'),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return SubjectsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -70,34 +84,8 @@ final class SubjectResource extends Resource
         return [
             'index' => ListSubjects::route('/'),
             'create' => CreateSubject::route('/create'),
+            'view' => ViewSubject::route('/{record}'),
             'edit' => EditSubject::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListSubjects extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = SubjectResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateSubject extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = SubjectResource::class;
-}
-
-final class EditSubject extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = SubjectResource::class;
 }

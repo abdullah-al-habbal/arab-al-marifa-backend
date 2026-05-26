@@ -1,93 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\LibraryItem\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\LibraryItem\Models\LibraryItem;
+use Modules\LibraryItem\Filament\Panel\Pages\ListLibraryItems;
+use Modules\LibraryItem\Filament\Panel\Pages\CreateLibraryItem;
+use Modules\LibraryItem\Filament\Panel\Pages\ViewLibraryItem;
+use Modules\LibraryItem\Filament\Panel\Pages\EditLibraryItem;
+use Modules\LibraryItem\Filament\Panel\Schemas\LibraryItemForm;
+use Modules\LibraryItem\Filament\Panel\Schemas\LibraryItemInfolist;
+use Modules\LibraryItem\Filament\Panel\Tables\LibraryItemsTable;
 
-final class LibraryItemResource extends Resource
+class LibraryItemResource extends Resource
 {
     protected static ?string $model = LibraryItem::class;
 
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $recordTitleAttribute = 'title';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-bookmark';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.library');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.library_items');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.library_item');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.library_items');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                TextInput::make('title')
-                    ->required()
-                    ->maxLength(255),
-                Select::make('item_type')
-                    ->options([
-                        'government_book' => 'Government Book',
-                        'study_notes' => 'Study Notes',
-                        'lesson_attachment' => 'Lesson Attachment',
-                    ])
-                    ->required(),
-                TextInput::make('storage_path')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('mime_type')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('file_size_bytes')
-                    ->integer()
-                    ->required(),
-                Select::make('classifiable_type')
-                    ->options([
-                        'Modules\EducationalStage\Models\EducationalStage' => 'Educational Stage',
-                        'Modules\EducationalSubStage\Models\EducationalSubStage' => 'Educational Sub Stage',
-                        'Modules\CourseType\Models\CourseType' => 'Course Type',
-                        'Modules\Subject\Models\Subject' => 'Subject',
-                        'Modules\Lesson\Models\Lesson' => 'Lesson',
-                    ])
-                    ->required(),
-                TextInput::make('classifiable_id')
-                    ->numeric()
-                    ->required(),
-                Toggle::make('is_downloadable')
-                    ->default(false),
-                Toggle::make('is_active')
-                    ->default(true),
-                TextInput::make('sort_order')
-                    ->integer()
-                    ->default(0),
-            ]);
+        return LibraryItemForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return LibraryItemInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('title')
-                    ->searchable(),
-                TextColumn::make('item_type'),
-                TextColumn::make('classifiable_type'),
-                TextColumn::make('classifiable_id'),
-                ToggleColumn::make('is_downloadable'),
-                ToggleColumn::make('is_active'),
-                TextColumn::make('sort_order'),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return LibraryItemsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -95,34 +84,8 @@ final class LibraryItemResource extends Resource
         return [
             'index' => ListLibraryItems::route('/'),
             'create' => CreateLibraryItem::route('/create'),
+            'view' => ViewLibraryItem::route('/{record}'),
             'edit' => EditLibraryItem::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListLibraryItems extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = LibraryItemResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateLibraryItem extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = LibraryItemResource::class;
-}
-
-final class EditLibraryItem extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = LibraryItemResource::class;
 }

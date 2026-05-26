@@ -1,90 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\User\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Resources\Pages\CreateRecord;
-use Filament\Resources\Pages\EditRecord;
-use Filament\Resources\Pages\ListRecords;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\User\Models\User;
+use Modules\User\Filament\Panel\Pages\ListUsers;
+use Modules\User\Filament\Panel\Pages\CreateUser;
+use Modules\User\Filament\Panel\Pages\ViewUser;
+use Modules\User\Filament\Panel\Pages\EditUser;
+use Modules\User\Filament\Panel\Schemas\UserForm;
+use Modules\User\Filament\Panel\Schemas\UserInfolist;
+use Modules\User\Filament\Panel\Tables\UsersTable;
 
 class UserResource extends Resource
 {
     protected static ?string $model = User::class;
 
+    protected static ?int $navigationSort = 1;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-users';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.people');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.users');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.user');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.users');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('phone')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255),
-                TextInput::make('email')
-                    ->email()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255),
-                Select::make('role')
-                    ->required()
-                    ->options([
-                        'admin' => 'Admin',
-                        'teacher' => 'Teacher',
-                        'student' => 'Student',
-                    ]),
-                Select::make('status')
-                    ->required()
-                    ->options([
-                        'active' => 'Active',
-                        'suspended' => 'Suspended',
-                    ]),
-                TextInput::make('password')
-                    ->password()
-                    ->required(fn (string $operation): bool => $operation === 'create')
-                    ->hiddenOn('edit')
-                    ->maxLength(255),
-            ]);
+        return UserForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return UserInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('phone')
-                    ->searchable(),
-                TextColumn::make('email')
-                    ->searchable(),
-                TextColumn::make('role')
-                    ->badge()
-                    ->sortable(),
-                TextColumn::make('status')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'active' => 'success',
-                        'suspended' => 'danger',
-                        default => 'gray',
-                    })
-                    ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable(),
-            ])
-            ->filters([])
-            ->actions([])
-            ->bulkActions([]);
+        return UsersTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -92,27 +84,8 @@ class UserResource extends Resource
         return [
             'index' => ListUsers::route('/'),
             'create' => CreateUser::route('/create'),
+            'view' => ViewUser::route('/{record}'),
             'edit' => EditUser::route('/{record}/edit'),
         ];
     }
-
-    public static function getNavigationLabel(): string
-    {
-        return 'Users';
-    }
-}
-
-class ListUsers extends ListRecords
-{
-    protected static string $resource = UserResource::class;
-}
-
-class CreateUser extends CreateRecord
-{
-    protected static string $resource = UserResource::class;
-}
-
-class EditUser extends EditRecord
-{
-    protected static string $resource = UserResource::class;
 }

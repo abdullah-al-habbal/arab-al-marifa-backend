@@ -4,68 +4,80 @@ declare(strict_types=1);
 
 namespace Modules\CourseType\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Resources\Pages\CreateRecord;
-use Filament\Resources\Pages\EditRecord;
-use Filament\Resources\Pages\ListRecords;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\CourseType\Models\CourseType;
+use Modules\CourseType\Filament\Panel\Pages\ListCourseTypes;
+use Modules\CourseType\Filament\Panel\Pages\CreateCourseType;
+use Modules\CourseType\Filament\Panel\Pages\ViewCourseType;
+use Modules\CourseType\Filament\Panel\Pages\EditCourseType;
+use Modules\CourseType\Filament\Panel\Schemas\CourseTypeForm;
+use Modules\CourseType\Filament\Panel\Schemas\CourseTypeInfolist;
+use Modules\CourseType\Filament\Panel\Tables\CourseTypesTable;
 
 class CourseTypeResource extends Resource
 {
     protected static ?string $model = CourseType::class;
 
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-rectangle-stack';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.hierarchy');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.course_types');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.course_type');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.course_types');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('sub_stage_id')
-                    ->relationship('subStage', 'name')
-                    ->required(),
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('academic_year')
-                    ->maxLength(255),
-                TextInput::make('sort_order')
-                    ->numeric()
-                    ->default(0),
-                Toggle::make('is_active')
-                    ->default(true),
-            ]);
+        return CourseTypeForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return CourseTypeInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('subStage.name')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('name')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('academic_year')
-                    ->searchable(),
-                TextColumn::make('sort_order')
-                    ->sortable(),
-                IconColumn::make('is_active')
-                    ->boolean()
-                    ->sortable(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable(),
-            ])
-            ->filters([])
-            ->actions([])
-            ->bulkActions([]);
+        return CourseTypesTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -73,27 +85,8 @@ class CourseTypeResource extends Resource
         return [
             'index' => ListCourseTypes::route('/'),
             'create' => CreateCourseType::route('/create'),
+            'view' => ViewCourseType::route('/{record}'),
             'edit' => EditCourseType::route('/{record}/edit'),
         ];
     }
-
-    public static function getNavigationLabel(): string
-    {
-        return 'Course Types';
-    }
-}
-
-class ListCourseTypes extends ListRecords
-{
-    protected static string $resource = CourseTypeResource::class;
-}
-
-class CreateCourseType extends CreateRecord
-{
-    protected static string $resource = CourseTypeResource::class;
-}
-
-class EditCourseType extends EditRecord
-{
-    protected static string $resource = CourseTypeResource::class;
 }

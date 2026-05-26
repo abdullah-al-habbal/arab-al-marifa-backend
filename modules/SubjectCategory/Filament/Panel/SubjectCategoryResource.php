@@ -1,64 +1,82 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Modules\SubjectCategory\Filament\Panel;
 
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Schema;
+use BackedEnum;
 use Filament\Resources\Resource;
-use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Columns\ToggleColumn;
+use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Modules\SubjectCategory\Models\SubjectCategory;
+use Modules\SubjectCategory\Filament\Panel\Pages\ListSubjectCategories;
+use Modules\SubjectCategory\Filament\Panel\Pages\CreateSubjectCategory;
+use Modules\SubjectCategory\Filament\Panel\Pages\ViewSubjectCategory;
+use Modules\SubjectCategory\Filament\Panel\Pages\EditSubjectCategory;
+use Modules\SubjectCategory\Filament\Panel\Schemas\SubjectCategoryForm;
+use Modules\SubjectCategory\Filament\Panel\Schemas\SubjectCategoryInfolist;
+use Modules\SubjectCategory\Filament\Panel\Tables\SubjectCategoriesTable;
 
-final class SubjectCategoryResource extends Resource
+class SubjectCategoryResource extends Resource
 {
     protected static ?string $model = SubjectCategory::class;
 
+    protected static ?int $navigationSort = 2;
+
+    protected static ?string $recordTitleAttribute = 'name';
+
+    public static function getNavigationIcon(): string|BackedEnum|null
+    {
+        return 'heroicon-o-tag';
+    }
+
+    public static function getNavigationGroup(): ?string
+    {
+        return __('filament.navigation.groups.catalog');
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        return (string) static::getModel()::count();
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'primary';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('app.subject_categories');
+    }
+
+    public static function getModelLabel(): string
+    {
+        return __('app.subject_category');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('app.subject_categories');
+    }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->schema([
-                Select::make('subject_id')
-                    ->relationship('subject', 'name')
-                    ->required(),
-                TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                TextInput::make('sort_order')
-                    ->integer()
-                    ->default(0),
-                Toggle::make('is_active')
-                    ->default(true),
-            ]);
+        return SubjectCategoryForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return SubjectCategoryInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                TextColumn::make('subject.name')
-                    ->label('Subject'),
-                TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('sort_order'),
-                ToggleColumn::make('is_active'),
-                TextColumn::make('created_at')
-                    ->dateTime(),
-            ])
-            ->filters([])
-            ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-            ])
-            ->bulkActions([]);
+        return SubjectCategoriesTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [];
     }
 
     public static function getPages(): array
@@ -66,34 +84,8 @@ final class SubjectCategoryResource extends Resource
         return [
             'index' => ListSubjectCategories::route('/'),
             'create' => CreateSubjectCategory::route('/create'),
+            'view' => ViewSubjectCategory::route('/{record}'),
             'edit' => EditSubjectCategory::route('/{record}/edit'),
         ];
     }
-
-    public static function getRelations(): array
-    {
-        return [];
-    }
-}
-
-final class ListSubjectCategories extends \Filament\Resources\Pages\ListRecords
-{
-    protected static string $resource = SubjectCategoryResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            CreateAction::make(),
-        ];
-    }
-}
-
-final class CreateSubjectCategory extends \Filament\Resources\Pages\CreateRecord
-{
-    protected static string $resource = SubjectCategoryResource::class;
-}
-
-final class EditSubjectCategory extends \Filament\Resources\Pages\EditRecord
-{
-    protected static string $resource = SubjectCategoryResource::class;
 }
