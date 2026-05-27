@@ -61,11 +61,11 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ]);
 
-        foreach (glob(base_path('modules/*/Filament/Panel'), GLOB_ONLYDIR) as $panelDir) {
-            $moduleName = basename(dirname(dirname($panelDir)));
+        foreach (glob(base_path('modules/*/Filament/Panel/Admin'), GLOB_ONLYDIR) as $panelDir) {
+            $moduleName = basename(dirname(dirname(dirname($panelDir))));
             $panel->discoverResources(
                 in: $panelDir,
-                for: 'Modules\\' . $moduleName . '\\Filament\\Panel',
+                for: 'Modules\\' . $moduleName . '\\Filament\\Panel\\Admin',
             );
         }
 
